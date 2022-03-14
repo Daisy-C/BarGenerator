@@ -202,7 +202,7 @@ def data_check():
             if multiples == set():
                 print(" · 合约{}: 没有成交记录".format(instrument))
             else:
-                print(" · 合约{}: 每次成交期货成交量可为{}".format(instrument, multiples))
+                print(" · 合约{}: 每次成交 期货合约成交股数可为{}".format(instrument, multiples))
             # 计算各个合约的平均推送频率
             num = len(ins)
             time = ins.iloc[num - 1]["LocalTime"] - ins.iloc[0]["LocalTime"]
@@ -213,7 +213,7 @@ def data_check():
             # if multiples == set():
             #     print(" · 合约{}: 没有成交记录,推送频率为{}".format(instrument, round(freq, 2)))
             # else:
-            #     print(" · 合约{}: 每次成交期货成交量可为{},总体平均推送频率为{}".format(instrument, multiples, round(freq, 2)))
+            #     print(" · 合约{}: 每次成交 期货合约成交股数可为{}, 平均推送频率为{}".format(instrument, multiples, round(freq, 2)))
         print("最大平均tick推送频率：{}次/秒".format(round(np.max(freq_list), 2)))
         print("最小平均tick推送频率：{}次/秒".format(round(np.min(freq_list), 2)))
         print("峰值tick推送频率：{}次/秒".format(round(1/(min_time_diff/1000000000), 2)))
