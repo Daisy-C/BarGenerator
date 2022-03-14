@@ -90,7 +90,7 @@ def data_check():
         plt.ylabel("Day")
         plt.title(exchange + ": Relation of TradingDay & ActionDay")
         plt.legend()
-        plt.savefig('./TARelation/'+exchange+' TARelation.png', dpi=800)
+        plt.savefig('./pics/TARelation/'+exchange+' TARelation.png', dpi=800)
         plt.show()
         ''' 找出分界点'''
         flag = 1
@@ -103,7 +103,7 @@ def data_check():
         if flag:
             print(" · ActionDay,TradingDay一致")
 
-        # 分交易所探索tick推送频率
+        # 分交易所探索对所有合约的tick推送频率
         num = len(view_certain_exchange)
         time = view_certain_exchange.iloc[num - 1]["LocalTime"] - view_certain_exchange.iloc[0]["LocalTime"]
         time = time // 1000000000  # 纳秒时间转换为秒
@@ -216,7 +216,7 @@ def data_check():
             #     print(" · 合约{}: 每次成交期货成交量可为{},总体平均推送频率为{}".format(instrument, multiples, round(freq, 2)))
         print("最大平均tick推送频率：{}次/秒".format(round(np.max(freq_list), 2)))
         print("最小平均tick推送频率：{}次/秒".format(round(np.min(freq_list), 2)))
-        print("峰值tick推送频率：{}次/秒".format(round(1/(min_time_diff // 1000000000), 2)))
+        print("峰值tick推送频率：{}次/秒".format(round(1/(min_time_diff/1000000000), 2)))
         print("")  # 换行
 
     print("========================================数据检查结束========================================")
