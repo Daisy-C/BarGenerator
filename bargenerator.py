@@ -112,7 +112,7 @@ def data_check():
         time = view_certain_exchange.iloc[num - 1]["LocalTime"] - view_certain_exchange.iloc[0]["LocalTime"]
         time = time // 1000000000  # 纳秒时间转换为秒
         freq = num / time
-        print(" · 推送合约的频率总和为{}次/秒".format(freq))
+        print(" · 推送交易所下所有合约的频率为{}次/秒".format(freq))
 
         # 检查完一个交易所的数据后 换行
         print('')
@@ -182,6 +182,7 @@ def data_check():
         exc = dt[dt["ExchangeID"] == exchange]
         instruments = exc["InstrumentID"].unique()
         freq_list = []
+        min_time_diff = 0
         for instrument in instruments:
             multiples = set()
             ins = exc[exc["InstrumentID"] == instrument]
@@ -189,6 +190,11 @@ def data_check():
             for i in range(len(ins)):
                 if i == 0:
                     continue
+                elif i == 1:
+                    min_time_diff = ins.iloc[i]['LocalTime'] - ins.iloc[i-1]['LocalTime']
+                elif ins.iloc[i]['LocalTime'] - ins.iloc[i-1]['LocalTime'] < min_time_diff:
+                    min_time_diff = ins.iloc[i]['LocalTime'] - ins.iloc[i-1]['LocalTime']
+
                 if ins.iloc[i]['Volume'] != ins.iloc[i - 1]['Volume']:
                     diff_volume = ins.iloc[i]['Volume'] - ins.iloc[i - 1]['Volume']
                     diff_turnover = ins.iloc[i]['Turnover'] - ins.iloc[i - 1]['Turnover']
@@ -201,7 +207,7 @@ def data_check():
                 print(" · 合约{}: 没有成交记录".format(instrument))
             else:
                 print(" · 合约{}: 每次成交期货成交量可为{}".format(instrument, multiples))
-            # 计算各个合约的推送频率
+            # 计算各个合约的平均推送频率
             num = len(ins)
             time = ins.iloc[num - 1]["LocalTime"] - ins.iloc[0]["LocalTime"]
             time = time // 1000000000  # 纳秒时间转换为秒
@@ -211,10 +217,10 @@ def data_check():
             # if multiples == set():
             #     print(" · 合约{}: 没有成交记录,推送频率为{}".format(instrument, round(freq, 2)))
             # else:
-            #     print(" · 合约{}: 每次成交期货成交量可为{},推送频率为{}".format(instrument, multiples, round(freq, 2)))
-        print("平均合约tick推送频率：{}".format(round(np.mean(freq_list), 2)))
-        print("最大合约tick推送频率：{}".format(round(np.max(freq_list), 2)))
-        print("最小合约tick推送频率：{}".format(round(np.min(freq_list), 2)))
+            #     print(" · 合约{}: 每次成交期货成交量可为{},总体平均推送频率为{}".format(instrument, multiples, round(freq, 2)))
+        print("最大平均tick推送频率：{}次/秒".format(round(np.max(freq_list), 2)))
+        print("最小平均tick推送频率：{}次/秒".format(round(np.min(freq_list), 2)))
+        print("峰值tick推送频率：{}次/秒".format(round(1/(min_time_diff // 1000000000), 2)))
         print("")  # 换行
 
     print("========================================数据检查结束========================================")
@@ -226,21 +232,27 @@ def minute_bar():
     # 将LocalTime转换到中国时区时间 年-月-日 时:分:秒 便于按分钟处理数据
     dt['LocalTime'] = [datetime.fromtimestamp(x // 1000000000).strftime("%Y-%m-%d %H:%M:%S") for x in dt['LocalTime']]
 
-    # 保存bar数据的dataframe变量
-    result = pd.DataFrame(columns=["LocalTime", 'InstrumentID', 'Opening', 'Max', 'Min', 'Closing'])
+    # 用于保存bar数据,字典类型，每个合约对应一个dataframe
+    result = {}
     # 用于暂时记录数据
     record = {}
     LastPrice = {}
+    PreVolume = {}
     time_record = []
     for instrument in InsID:
+        result[instrument] = pd.DataFrame(columns=["LocalTime", 'Opening', 'Max', 'Min', 'Closing'])
         record[instrument] = list()
-        LastPrice[instrument] = 0
+        ins_data = dt[dt["InstrumentID"] == instrument]
+        LastPrice[instrument] = ins_data.iloc[0]['LastPrice']
+        PreVolume[instrument] = ins_data.iloc[0]['Volume']
+
     ''' 模拟流式行情接收 按照LocalTime顺序一条条读数据 合成每分钟每个合约的bar'''
     cnt = len(dt)
     for i in range(cnt):
         localtime = dt.iloc[i]["LocalTime"]
-        localtime = localtime[:-2]+'00'
-        if not (localtime in time_record):
+        localtime = localtime[:-2]+'00'    # 秒位归零，使得同一分钟数据时间戳相同
+        # 一分钟结束 即出现新的分钟时间戳，或读到最后一条数据
+        if not (localtime in time_record) or i == (cnt-1):
             # 记录时间
             time_record.append(localtime)
             # 第一条数据跳过
@@ -259,29 +271,40 @@ def minute_bar():
                     max_p = max(record[instrument])
                     min_p = min(record[instrument])
                     closing = record[instrument][-1]
-                new = pd.DataFrame({"LocalTime": [time_record[-1]], 'InstrumentID': [instrument], 'Opening': [opening], 'Max': [max_p], 'Min':[min_p], 'Closing': [closing]})
-                result = result.append(new)
-                # 清空数据
+                # 插入行数据
+                new = pd.DataFrame({"LocalTime": [time_record[-1]], 'Opening': [opening], 'Max': [max_p], 'Min': [min_p], 'Closing': [closing]})
+                result[instrument] = result[instrument].append(new)
+                # 处理完后，清空暂存的合约tick数据
                 record[instrument] = list()
-        # 正常记录数据
-        ins = dt.loc[i]['InstrumentID']
-        LastPrice[ins] = dt.loc[i]['LastPrice']
-        record[ins].append(dt.loc[i]['LastPrice'])
+        # 获取合约ID
+        ins = dt.iloc[i]['InstrumentID']
+        # 成交记录，记录价格数据
+        if dt.iloc[i]['Volume']-PreVolume[ins] > 0:
+            record[ins].append(dt.loc[i]['LastPrice'])
+        # 更新合约的数据，存入字典
+        LastPrice[ins] = dt.iloc[i]['LastPrice']
+        PreVolume[ins] = dt.iloc[i]['Volume']
+    ''' 补充检查每个合约得到的分钟bar数目是否正确 '''
+    # for instrument in InsID:
+    #     print("合约{}的结果 有条{}数据".format(instrument, len(result[instrument])))
+    #     print("Record中剩余{}条数据没有处理".format(len(record[instrument])))
 
-
-    # 存储数据
-    # 新的工作簿
+    # 创建新的openpyxl工作簿
     book = Workbook()
-    sheet = book.active
-    for row in dataframe_to_rows(result, index=False, header=True):
-        sheet.append(row)
+    # 存储数据，每个合约对应一个sheet
+    for instrument in InsID:
+        sheet = book.create_sheet(instrument)
+        for row in dataframe_to_rows(result[instrument], index=False, header=True):
+            sheet.append(row)
+    # 删除多余的默认sheet
+    del book["Sheet"]
     book.save("Bar.xlsx")
     return
 
 
 if __name__ == '__main__':
-    data_check()
-    minute_bar()
+    # data_check()
+    # minute_bar()
 
     '''测试'''
     # instrument = 'MA205'
