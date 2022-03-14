@@ -3,3 +3,7 @@
 
 程序具体模块设计及功能如下：
 ![](pics/mindmap.png)
+
+合成每分钟、每个合约指标的流程图如下所示：
+
+![](pics/FlowChart.png)
