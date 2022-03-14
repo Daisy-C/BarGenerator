@@ -31,10 +31,6 @@ ExID = dt['ExchangeID'].unique()
 ExName = {'DCE': '大连商品交易所', 'SHFE': '上海期货交易所', 'CZCE': '郑州商品交易所', 'INE': '上海国际能源交易中心'}
 
 
-def skip_check():
-    return
-
-
 # 数据检查
 def data_check():
     print("========================================数据检查结果========================================")
@@ -303,55 +299,5 @@ def minute_bar():
 
 
 if __name__ == '__main__':
-    # data_check()
-    # minute_bar()
-
-    '''测试'''
-    # instrument = 'MA205'
-    # instrument = 'MA203'
-    # instrument = 'TA203'
-    # ins = dt[dt["InstrumentID"] == instrument]
-    # multiples = set()
-    # for i in range(len(ins)):
-    #     if i == 0:
-    #         continue
-    #     if ins.iloc[i]['Volume'] != ins.iloc[i - 1]['Volume']:
-    #         diff_volume = ins.iloc[i]['Volume']-ins.iloc[i-1]['Volume']
-    #         diff_turnover = ins.iloc[i]['Turnover']-ins.iloc[i-1]['Turnover']
-    #         diff_time = ins.iloc[i]['LocalTime']-ins.iloc[i-1]['LocalTime']
-    #         price = diff_turnover/diff_volume
-    #         multiple = round(price/ins.iloc[i]['LastPrice'])
-    #         if multiple > 100:
-    #             multiple = round(multiple, -1)
-    #         multiples.add(multiple)
-    #         if multiple != 1:
-    #             print(ins.iloc[i-1:i+1])
-    #             print("volume差:{}   turnover差:{}   计算价格:{}   所给LastPrice:{}   取整倍数关系：{}".format(diff_volume, diff_turnover, price, ins.iloc[i]['LastPrice'], multiple))
-    #             print("")
-    # if multiples == set():
-    #     print("合约{}: 没有成交记录".format(instrument))
-    # else:
-    #     print("合约{}:{}倍".format(instrument, multiples))
-    # print(len(ins))
-
-
-    # ins = dt[dt['InstrumentID'] == 'MA205']
-    # price_list = []
-    # print(len(ins))
-    # for i in range(len(ins)):
-    #     if i == 1:
-    #         continue
-    #     if ins.iloc[i]['Volume'] != ins.iloc[i-1]['Volume']:
-    #         price = (ins.iloc[i]['Turnover']-ins.iloc[i-1]['Turnover'])/(ins.iloc[i]['Volume']-ins.iloc[i-1]['Volume'])
-    #     else:
-    #         price = 0
-    #     price_list.append(price)
-    # ''' 关系图绘制 '''
-    # fig, ax = plt.subplots()
-    # ax.plot(ins['LocalTime'][1:], price_list, label="Cal_Price")
-    # ax.plot(ins['LocalTime'][1:], ins['LastPrice'][1:], label="LastPrice")
-    # plt.xlabel("LocalTime")
-    # plt.ylabel("Price")
-    # plt.title("Tendency Chart")
-    # plt.legend()
-    # plt.show()
+    data_check()
+    minute_bar()
