@@ -77,10 +77,10 @@ def data_check():
             print(" · (UpdateTime, UpdateMyllisec)不单调")
 
         # 分交易所探索ActionDay，TradingDay和实际交易时间的关系 画出关系图
-        action_day = view_certain_exchange["ActionDay"].unique()
-        trading_day = view_certain_exchange["TradingDay"].unique()
-        print(" · ActionDay 的范围:{}".format(action_day))
-        print(" · TradingDay的范围:{}".format(action_day))
+        # action_day = view_certain_exchange["ActionDay"].unique()
+        # trading_day = view_certain_exchange["TradingDay"].unique()
+        # print(" · ActionDay 的范围:{}".format(action_day))
+        # print(" · TradingDay的范围:{}".format(action_day))
         ''' 关系图绘制 '''
         fig, ax = plt.subplots()
         ax.plot(view_certain_exchange['UpdateTime'], view_certain_exchange['ActionDay'], label="ActionDay")
@@ -106,9 +106,9 @@ def data_check():
         # 分交易所探索对所有合约的tick推送频率
         num = len(view_certain_exchange)
         time = view_certain_exchange.iloc[num - 1]["LocalTime"] - view_certain_exchange.iloc[0]["LocalTime"]
-        time = time // 1000000000  # 纳秒时间转换为秒
+        time = time / 1000000000  # 纳秒时间转换为秒
         freq = num / time
-        print(" · 推送交易所下所有合约的频率为{}次/秒".format(freq))
+        print(" · 推送交易所下所有合约的频率为{}次/秒".format(round(freq,2)))
 
         # 检查完一个交易所的数据后 换行
         print('')
@@ -206,7 +206,7 @@ def data_check():
             # 计算各个合约的平均推送频率
             num = len(ins)
             time = ins.iloc[num - 1]["LocalTime"] - ins.iloc[0]["LocalTime"]
-            time = time // 1000000000  # 纳秒时间转换为秒
+            time = time / 1000000000  # 纳秒时间转换为秒
             freq = num / time
             freq_list.append(freq)
             # 两个数据同时结果输出
